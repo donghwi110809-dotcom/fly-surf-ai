@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport"
+        content="width=device-width,initial-scale=1,viewport-fit=cover">
+
+  <title>FlyBrain × S.U.R.F.</title>
+
+  <!-- 실제 Microsoft Edge S.U.R.F. 리소스 -->
+  <base href="https://surf.jackbuehner.com/">
+
+  <link
+    href="resources/css/interface.css"
+    rel="stylesheet"
+  >
+
+  <style>
+    #fly-panel {
+      position: fixed;
+      z-index: 999999;
+      top: 8px;
+      left: 8px;
+
+      padding: 10px;
+      border-radius: 12px;
+
+      background: rgba(0,0,0,.82);
+      color: white;
+
+      font-family: system-ui, sans-serif;
+      font-size: 13px;
+    }
+
+    #fly-panel button {
+      margin-top: 6px;
+      margin-right: 4px;
+      padding: 8px 11px;
+
+      border: 0;
+      border-radius: 8px;
+
+      font-weight: 700;
+    }
+
+    #fly-status {
+      margin-top: 7px;
+      line-height: 1.5;
+    }
+  </style>
+
+  <script src="resources/js/base-error-reporting.js"></script>
+  <script src="resources/js/surf-error-reporting.js"></script>
+  <script src="resources/js/assert.js"></script>
+  <script src="resources/js/promise_resolver.js"></script>
+  <script src="resources/js/cr.js"></script>
+  <script src="resources/js/parse_html_subset.js"></script>
+  <script src="resources/js/load_time_data.js"></script>
+  <script src="resources/js/util.js"></script>
+  <script src="resources/js/strings.js"></script>
+</head>
+
+<body>
+
+  <div id="hamburger-container"></div>
+  <div id="modal-root"></div>
+
+  <div id="fly-panel">
+    <b>🪰 초파리 AI V1</b><br>
+
+    <button id="ai-toggle">
+      AI 시작
+    </button>
+
+    <button id="boost">
+      부스트
+    </button>
+
+    <div id="fly-status">
+      게임 로딩 중...
+    </div>
+  </div>
+
+  <script
+    defer
+    src="resources/js/lib_react.chunk.js">
+  </script>
+
+  <script
+    defer
+    src="resources/js/lib_common.chunk.js">
+  </script>
+
+  <script
+    defer
+    src="resources/js/surf.bundle.js">
+  </script>
+
+  <script>
+    (() => {
+
+      let running = false;
+      let timer = null;
+      let steps = 0;
+
+      const status =
+        document.getElementById("fly-status");
+
+      function press(code, key) {
+
+        window.dispatchEvent(
+          new KeyboardEvent(
+            "keydown",
+            {
+              code: code,
+              key: key,
+              bubbles: true
+            }
+          )
+        );
+
+        setTimeout(() => {
+
+          window.dispatchEvent(
+            new KeyboardEvent(
+              "keyup",
+              {
+                code: code,
+                key: key,
+                bubbles: true
+              }
+            )
+          );
+
+        }, 80);
+      }
+
+      function aiStep() {
+
+        steps++;
+
+        const r = Math.random();
+
+        let action;
+
+        if (r < 0.42) {
+
+          press(
+            "ArrowLeft",
+            "ArrowLeft"
+          );
+
+          action = "← 왼쪽";
+
+        }
+
+        else if (r < 0.84) {
+
+          press(
+            "ArrowRight",
+            "ArrowRight"
+          );
+
+          action = "→ 오른쪽";
+
+        }
+
+        else {
+
+          press(
+            "ArrowDown",
+            "ArrowDown"
+          );
+
+          action = "↓ 아래";
+        }
+
+        if (Math.random() < 0.07) {
+
+          press(
+            "KeyF",
+            "f"
+          );
+        }
+
+        status.innerHTML =
+          "AI 실행 중<br>" +
+          "행동: " + action +
+          "<br>신경 스텝: " + steps;
+      }
+
+      document
+        .getElementById("ai-toggle")
+        .onclick = function () {
+
+          running = !running;
+
+          if (running) {
+
+            this.textContent =
+              "AI 정지";
+
+            /*
+             * S.U.R.F. 시작 입력
+             */
+            press(
+              "Space",
+              " "
+            );
+
+            timer =
+              setInterval(
+                aiStep,
+                180
+              );
+
+          }
+
+          else {
+
+            this.textContent =
+              "AI 시작";
+
+            clearInterval(timer);
+
+            status.innerHTML =
+              "AI 정지<br>" +
+              "총 스텝: " +
+              steps;
+          }
+        };
+
+
+      document
+        .getElementById("boost")
+        .onclick = () => {
+
+          press(
+            "KeyF",
+            "f"
+          );
+
+        };
+
+    })();
+  </script>
+
+</body>
+</html>
