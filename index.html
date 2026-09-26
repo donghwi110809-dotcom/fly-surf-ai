@@ -8,81 +8,15 @@
     content="width=device-width,initial-scale=1,viewport-fit=cover"
   >
 
-  <title>FlyBrain × Microsoft Edge S.U.R.F.</title>
+  <title>FlyBrain × S.U.R.F.</title>
 
-  <!-- 이제 외부 사이트가 아니라 우리 저장소의 SURF 파일 사용 -->
-  <link rel="stylesheet" href="./resources/css/interface.css">
+  <!-- S.U.R.F. 로컬 리소스 -->
+  <link
+    rel="stylesheet"
+    href="./resources/css/interface.css"
+  >
 
-  <style>
-    #fly-ai-panel {
-      position: fixed;
-      z-index: 9999999;
-      top: max(10px, env(safe-area-inset-top));
-      left: 10px;
-
-      width: 185px;
-      padding: 12px;
-
-      background: rgba(8, 12, 20, .88);
-      color: #fff;
-
-      border: 1px solid rgba(255,255,255,.22);
-      border-radius: 14px;
-
-      font-family: system-ui, sans-serif;
-      font-size: 12px;
-
-      backdrop-filter: blur(8px);
-    }
-
-    #fly-ai-panel .title {
-      font-size: 14px;
-      font-weight: 800;
-      margin-bottom: 8px;
-    }
-
-    #fly-ai-panel button {
-      padding: 8px 10px;
-      margin: 3px;
-
-      border: 0;
-      border-radius: 8px;
-
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    #ai-toggle {
-      background: #49d17d;
-    }
-
-    #ai-boost {
-      background: #ffd45c;
-    }
-
-    #ai-status {
-      margin-top: 8px;
-      line-height: 1.45;
-    }
-
-    #brain-bar {
-      height: 5px;
-      margin-top: 7px;
-      overflow: hidden;
-
-      background: rgba(255,255,255,.15);
-      border-radius: 99px;
-    }
-
-    #brain-activity {
-      width: 10%;
-      height: 100%;
-      background: #49d17d;
-      transition: width .1s;
-    }
-  </style>
-
-  <!-- SURF 기본 시스템 -->
+  <!-- S.U.R.F. 기본 모듈 -->
   <script src="./resources/js/base-error-reporting.js"></script>
   <script src="./resources/js/surf-error-reporting.js"></script>
   <script src="./resources/js/assert.js"></script>
@@ -96,37 +30,15 @@
 
 <body>
 
-  <!-- SURF가 사용하는 영역 -->
+  <!-- S.U.R.F. UI -->
   <div id="hamburger-container"></div>
   <div id="modal-root"></div>
 
-  <!-- AI 상태창 -->
-  <div id="fly-ai-panel">
 
-    <div class="title">
-      🪰 FlyBrain AI
-    </div>
+  <!-- ========================= -->
+  <!-- Microsoft Edge S.U.R.F.   -->
+  <!-- ========================= -->
 
-    <button id="ai-toggle">
-      AI 시작
-    </button>
-
-    <button id="ai-boost">
-      BOOST
-    </button>
-
-    <div id="ai-status">
-      SURF 로딩 중...
-    </div>
-
-    <div id="brain-bar">
-      <div id="brain-activity"></div>
-    </div>
-
-  </div>
-
-
-  <!-- 실제 Microsoft Edge SURF -->
   <script
     defer
     src="./resources/js/lib_react.chunk.js">
@@ -143,376 +55,29 @@
   </script>
 
 
-  <script>
-  (() => {
-
-    let running = false;
-    let timer = null;
-
-    let steps = 0;
-
-    /*
-      FlyBrain V1
-
-      현재 단계:
-      감각 입력
-          ↓
-      희소 Kenyon-cell 스타일 층
-          ↓
-      행동 출력
-
-      다음 버전에서 실제 connectome 데이터와
-      연결할 수 있도록 분리해 둠.
-    */
-
-    const INPUTS = 35;
-    const KENYON = 96;
-    const OUTPUTS = 4;
-
-    const weights1 = [];
-    const weights2 = [];
-
-    // 감각 → Kenyon
-    for (let k = 0; k < KENYON; k++) {
-
-      const row = [];
-
-      for (let i = 0; i < INPUTS; i++) {
-
-        // 희소 연결
-        row.push(
-          Math.random() < 0.16
-            ? (Math.random() * 2 - 1)
-            : 0
-        );
-      }
-
-      weights1.push(row);
-    }
-
-    // Kenyon → 행동
-    for (let o = 0; o < OUTPUTS; o++) {
-
-      const row = [];
-
-      for (let k = 0; k < KENYON; k++) {
-
-        row.push(
-          Math.random() * 0.2 - 0.1
-        );
-      }
-
-      weights2.push(row);
-    }
-
-
-    function press(code, key) {
-
-      const options = {
-        code,
-        key,
-        bubbles: true,
-        cancelable: true
-      };
-
-      document.dispatchEvent(
-        new KeyboardEvent(
-          "keydown",
-          options
-        )
-      );
-
-      window.dispatchEvent(
-        new KeyboardEvent(
-          "keydown",
-          options
-        )
-      );
-
-      setTimeout(() => {
-
-        document.dispatchEvent(
-          new KeyboardEvent(
-            "keyup",
-            options
-          )
-        );
-
-        window.dispatchEvent(
-          new KeyboardEvent(
-            "keyup",
-            options
-          )
-        );
-
-      }, 90);
-    }
-
-
-    function sense() {
-
-      const x = new Array(INPUTS).fill(0);
-
-      /*
-        V1에서는 게임 내부 상태 API를 아직 직접
-        읽지 않으므로 시간/행동/노이즈를 감각 입력으로 사용.
-
-        다음 단계에서:
-        플레이어 위치
-        장애물 거리
-        코인 위치
-        속도
-        충돌 위험도
-
-        등을 여기에 연결한다.
-      */
-
-      x[0] = 1;
-
-      x[1] =
-        Math.sin(steps * 0.08);
-
-      x[2] =
-        Math.cos(steps * 0.05);
-
-      for (let i = 3; i < INPUTS; i++) {
-
-        x[i] =
-          Math.random() * 2 - 1;
-      }
-
-      return x;
-    }
-
-
-    function brain(input) {
-
-      const hidden =
-        new Array(KENYON).fill(0);
-
-      for (let k = 0; k < KENYON; k++) {
-
-        let sum = 0;
-
-        for (let i = 0; i < INPUTS; i++) {
-
-          sum +=
-            input[i] *
-            weights1[k][i];
-        }
-
-        // 희소 활성화
-        hidden[k] =
-          sum > 1.25
-            ? sum
-            : 0;
-      }
-
-
-      const output =
-        new Array(OUTPUTS).fill(0);
-
-      for (let o = 0; o < OUTPUTS; o++) {
-
-        let sum = 0;
-
-        for (let k = 0; k < KENYON; k++) {
-
-          sum +=
-            hidden[k] *
-            weights2[o][k];
-        }
-
-        output[o] = sum;
-      }
-
-      return {
-        hidden,
-        output
-      };
-    }
-
-
-    function chooseAction(output) {
-
-      let best = 0;
-
-      for (let i = 1; i < output.length; i++) {
-
-        if (output[i] > output[best]) {
-
-          best = i;
-        }
-      }
-
-      return best;
-    }
-
-
-    function aiStep() {
-
-      if (!running) return;
-
-      steps++;
-
-      const input =
-        sense();
-
-      const result =
-        brain(input);
-
-      const action =
-        chooseAction(
-          result.output
-        );
-
-
-      let name = "";
-
-      if (action === 0) {
-
-        press(
-          "ArrowLeft",
-          "ArrowLeft"
-        );
-
-        name = "← LEFT";
-      }
-
-      else if (action === 1) {
-
-        press(
-          "ArrowRight",
-          "ArrowRight"
-        );
-
-        name = "→ RIGHT";
-      }
-
-      else if (action === 2) {
-
-        press(
-          "ArrowDown",
-          "ArrowDown"
-        );
-
-        name = "↓ DOWN";
-      }
-
-      else {
-
-        press(
-          "KeyF",
-          "f"
-        );
-
-        name = "⚡ BOOST";
-      }
-
-
-      const active =
-        result.hidden.filter(
-          n => n > 0
-        ).length;
-
-
-      document
-        .getElementById("brain-activity")
-        .style.width =
-          Math.min(
-            100,
-            active / KENYON * 300
-          ) + "%";
-
-
-      document
-        .getElementById("ai-status")
-        .innerHTML =
-
-          "상태: 실행 중" +
-          "<br>행동: " + name +
-          "<br>신경 스텝: " + steps +
-          "<br>활성 뉴런: " +
-          active + "/" + KENYON;
-
-    }
-
-
-    document
-      .getElementById("ai-toggle")
-      .onclick = function () {
-
-        running = !running;
-
-        if (running) {
-
-          this.textContent =
-            "AI 정지";
-
-          /*
-            SPACE = 게임 시작
-          */
-
-          press(
-            "Space",
-            " "
-          );
-
-          timer =
-            setInterval(
-              aiStep,
-              170
-            );
-
-        }
-
-        else {
-
-          this.textContent =
-            "AI 시작";
-
-          clearInterval(timer);
-
-          document
-            .getElementById("ai-status")
-            .innerHTML =
-              "AI 정지" +
-              "<br>총 신경 스텝: " +
-              steps;
-        }
-      };
-
-
-    document
-      .getElementById("ai-boost")
-      .onclick = () => {
-
-        press(
-          "KeyF",
-          "f"
-        );
-
-      };
-
-
-    window.addEventListener(
-      "load",
-      () => {
-
-        setTimeout(() => {
-
-          document
-            .getElementById("ai-status")
-            .innerHTML =
-              "SURF 준비 완료" +
-              "<br>AI 시작을 누르세요.";
-
-        }, 1500);
-
-      }
-    );
-
-  })();
+  <!-- ========================= -->
+  <!-- FlyBrain AI               -->
+  <!-- 순서 변경 금지             -->
+  <!-- ========================= -->
+
+  <!-- 1. 눈 / 감각 -->
+  <script
+    src="./fly-sensors.js">
+  </script>
+
+  <!-- 2. 초파리형 신경망 -->
+  <script
+    src="./fly-brain.js">
+  </script>
+
+  <!-- 3. 보상 학습 -->
+  <script
+    src="./fly-learning.js">
+  </script>
+
+  <!-- 4. 게임 조종 + UI -->
+  <script
+    src="./fly-controller.js">
   </script>
 
 </body>
